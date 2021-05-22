@@ -8,17 +8,6 @@ import 'package:via_cep_flutter/models/cep.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml2json/xml2json.dart';
 
-void throwApplicationError(Object e) {
-  final String? message = e is SimpleError
-      ? e.message
-      : 'Erro ao se conectar com o serviço Correios.';
-
-  throw ServiceError(
-    service: Service.Correios,
-    message: message,
-  );
-}
-
 String? translateErrorMessage(Map<String, dynamic> errorResponse) {
   try {
     return errorResponse['soap:Envelope']['soap:Body']['soap:Fault']
@@ -28,7 +17,7 @@ String? translateErrorMessage(Map<String, dynamic> errorResponse) {
   }
 }
 
-Map<String, dynamic>? analyzeAndParseResponse(http.Response response) {
+Map<String, dynamic> analyzeAndParseResponse(http.Response response) {
   final Xml2Json xml2json = Xml2Json();
 
   xml2json.parse(response.body);
@@ -50,11 +39,11 @@ Cep extractValuesFromSuccessResponse(Map<String, dynamic> response) {
         ['ns2:consultaCEPResponse']['return'];
 
     return Cep(
-      cep: responseReturn['cep'],
-      city: responseReturn['cidade'],
-      neighborhood: responseReturn['bairro'],
-      state: responseReturn['uf'],
-      street: responseReturn['end'],
+      responseReturn['cep'],
+      responseReturn['uf'],
+      responseReturn['cidade'],
+      responseReturn['end'],
+      responseReturn['bairro'],
     );
   } catch (e) {
     throw SimpleError('Não foi possível interpretar a resposta.');
@@ -65,9 +54,9 @@ Future<Cep> fetchCorreiosService(String cepWithLeftPad) async {
   final url = Uri.parse(
       'https://apps.correios.com.br/SigepMasterJPA/AtendeClienteService/AtendeCliente');
 
-  Cep resposta = const Cep();
+  late Cep resposta;
 
-  final response = await http.post(
+  final httpresponse = await http.post(
     url,
     headers: {
       'Content-Type': 'text/xml;charset=UTF-8',
@@ -78,11 +67,18 @@ Future<Cep> fetchCorreiosService(String cepWithLeftPad) async {
   );
 
   try {
-    final analyze = analyzeAndParseResponse(response);
+    final analyze = analyzeAndParseResponse(httpresponse);
 
-    if (analyze != null) resposta = extractValuesFromSuccessResponse(analyze);
+    resposta = extractValuesFromSuccessResponse(analyze);
   } catch (e) {
-    throwApplicationError(e);
+    final String? message = e is SimpleError
+        ? e.message
+        : 'Erro ao se conectar com o serviço Correios.';
+
+    throw ServiceError(
+      service: Service.Correios,
+      message: message,
+    );
   }
 
   return resposta;

@@ -9,37 +9,19 @@ import 'package:via_cep_flutter/services/via_cep.dart';
 
 const CEP_SIZE = 8;
 
-Future<Cep> fetchCepFromServices(String cepWithLeftPad) {
-  final completer = Completer<Cep>();
-
-  final errors = <Error>[];
-
-  final onValue = (Cep value) {
-    if (!completer.isCompleted) completer.complete(value);
-  };
-
-  final futures = [
+Future<Cep> fetchCepFromServices(String cepWithLeftPad) async {
+  final results = await Future.wait([
     fetchCorreiosService(cepWithLeftPad),
     fetchViaCepService(cepWithLeftPad)
-  ];
-
-  final onError = (error, StackTrace stack) {
-    errors.add(error);
-
-    if (!completer.isCompleted && futures.length == errors.length) {
-      completer.completeError(error, stack);
+  ]).catchError((e) async {
+    if (e is SimpleError) {
+      print('[ViaCepFlutter - SimpleError] ' + (e.message ?? ''));
+    } else if (e is ServiceError) {
+      print('[ViaCepFlutter - ServiceError] ' + (e.message ?? ''));
     }
-  };
+  });
 
-  for (var future in futures) {
-    future.then(onValue, onError: onError);
-  }
-
-  return completer.future;
-}
-
-void throwApplicationError(Object e) {
-  throw e;
+  return results[0];
 }
 
 void handleServicesError(Object aggregatedErrors) {
@@ -64,22 +46,42 @@ String leftPadWithZeros(String cep) {
   return ''.padLeft(CEP_SIZE - cep.length).replaceAll(' ', '0') + cep;
 }
 
-/// ## Receive a CEP and return the address corresponding by that CEP
-Future<Cep> readAddressByCep(String cepRawValue) async {
-  var cep = const Cep();
+/// Ao receber um CEP, a função irá fazer o tratamento da [String]
+///enviada, e então retornará um [Map<String,dynamic>] contendo
+///informações do lugar com o CEP informado
+///
+///Obs: caso o CEP enviado seja inválido, o [Map] que será retornado
+///estará vazio, logo, basta verificar se a estrutura está vazia
+///(isEmpty), para saber se a operação foi um sucesso.
+///
+/// Eis a maneira como informações do CEP estão contidas dentro do mapa,
+/// caso a operação seja um sucesso
+///
+/// **cep**: CEP enviado para a função
+///
+/// **state**: Iniciais do Estado,
+///
+/// **city**: Nome da Cidade,
+///
+/// **street**: Nome da rua/avenida por completo,
+///
+/// **neighborhood**: Bairro,
+///
+Future<Map<String, dynamic>> readAddressByCep(String cepRawValue) async {
+  Map<String, dynamic> result = {};
+
+  var cepStringTreated = removeSpecialCharacters(cepRawValue);
 
   try {
-    var cepStringTreated = removeSpecialCharacters(cepRawValue);
-
     cepStringTreated = validateInputLength(cepStringTreated);
-
     cepStringTreated = leftPadWithZeros(cepStringTreated);
 
-    cep = await fetchCepFromServices(cepStringTreated);
+    final cep = await fetchCepFromServices(cepStringTreated);
+
+    result = cep.toJson();
   } catch (e) {
-    handleServicesError(e);
-    throwApplicationError(e);
+    print('Verifique se o CEP enviado está correto!');
   }
 
-  return cep;
+  return result;
 }

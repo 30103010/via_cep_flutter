@@ -1,7 +1,7 @@
 import 'package:via_cep_flutter/enum.dart';
 import 'package:via_cep_flutter/error.dart';
 import 'package:via_cep_flutter/services/via_cep.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('fetchViaCepService success', () async {

@@ -1,6 +1,6 @@
 name: via_cep_flutter
 description: Pacote para fazer uso da API ViaCEP em Flutter
-version: 0.1.2
+version: 0.2.2
 homepage: https://github.com/MysteRys337/cep_future
 
 environment:
@@ -15,7 +15,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  test: ^1.16.8
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

@@ -1,6 +1,6 @@
 import 'package:via_cep_flutter/via_cep_flutter.dart';
 import 'package:via_cep_flutter/error.dart';
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   // test('adds one to input values', () {
@@ -39,13 +39,7 @@ void main() {
   test('cepFuture success', () async {
     final cep = await readAddressByCep('05653-070');
 
-    expect(cep.city, 'São Paulo');
-    expect(cep.cep, '05653070');
-    expect(cep.neighborhood, 'Jardim Leonor');
-    expect(cep.state, 'SP');
-    expect(cep.street, 'Praça Roberto Gomes Pedrosa');
-
-    expect(cep.toJson(), {
+    expect(cep, {
       'cep': '05653070',
       'state': 'SP',
       'city': 'São Paulo',

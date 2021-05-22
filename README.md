@@ -22,16 +22,14 @@ import 'package:via_cep_flutter/via_cep_flutter.dart';
 
 main() async {
     final result = await readAddressByCep('05653-070');
+    //Colocar o cep sem o uso do traço(05653070) também funciona!
 
-    print(result.city);
-    print(result.cep);
-    print(result.neighborhood);
-    print(result.state);
-    print(result.street);
+    print(result['city']);
+    print(result['cep']);
+    print(result['neighborhood']);
+    print(result['state']);
+    print(result['street']);
 
-    // or
-
-    print(result.toJson());
     // {
     //     'cep': '05653070',
     //     'state': 'SP',
@@ -41,3 +39,22 @@ main() async {
     // }
 }
 ```
+
+É possível que o processo de realização de buscas pode resultar em
+erro, retornando um resultado vazio. Para poder filtrar estes resultados,
+basta fazer a verificação, como o exemplo a seguir:
+
+```dart
+Future<void> main() async {
+  final result = await readAddressByCep('49328555'); //Cep inválido!
+
+  if (result.isEmpty) return;
+
+  print(result['city']);
+  print(result['cep']);
+  print(result['neighborhood']);
+  print(result['state']);
+  print(result['street']);
+}
+
+``` 
